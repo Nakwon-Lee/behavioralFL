@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <title>Welcome</title>
+  </head>
+  <body>
+    <div><p>{{ text }}</p></div>
+    <div>
+      <form action="{{ url }}" method="post">
+
+      </form>
+    </div>
+    <div><a href="/main/player">Play!</a></div>
+    <div><a href="/main/youtube">Click!</a></div>
+    {% for alog in loglist %}
+    <div><p>{{ alog.startdate }} : {{ alog.vector }} : {{ alog.sflabel }}</p></div>
+    {% endfor %}
+  </body>
+</html>
