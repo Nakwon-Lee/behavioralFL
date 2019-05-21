@@ -8,6 +8,11 @@ import flask
 import ssl
 import requests
 
+import Keys
+
+from BaseHandler import BaseHandler
+from BehaveLog import Behavlog
+
 from requests_toolbelt.adapters import appengine
 from apiclient.discovery import build
 from apiclient.errors import HttpError
@@ -17,15 +22,17 @@ from webapp2_extras import sessions
 import webapp2
 import jinja2
 
+from R_Player import YouTubePlayer
+from R_Video import R_Video
+from R_Playlist import R_Playlist
+from R_PlaylistItems import R_PlayListItems
+
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     autoescape=True,
     extensions=['jinja2.ext.autoescape'])
 
-DEVELOPER_KEY = 'AIzaSyAzUQuEdXv7iz062Ep9YjgFzDp1dZF8jJY'
 LIST_LENGTH = 3
-YOUTUBE_API_SERVICE_NAME = 'youtube'
-YOUTUBE_API_VERSION = 'v3'
 
 sconfig = {}
 sconfig['webapp2_extras.sessions'] = {'secret_key':'472405203058'}
@@ -47,26 +54,6 @@ def credentials_to_dict(credentials):
             'client_secret':credentials.client_secret,
             'scopes':credentials.scopes}
 
-class Behavlog(ndb.Model):
-    remoaddr = ndb.StringProperty(indexed=True)
-    startdate = ndb.DateTimeProperty(auto_now_add=True)
-    vector = ndb.JsonProperty()
-    sflabel = ndb.BooleanProperty(default=False)
-
-
-class BaseHandler(webapp2.RequestHandler):
-    def dispatch(self):
-        self.session_store = sessions.get_store(request=self.request)
-
-        try:
-            webapp2.RequestHandler.dispatch(self)
-        finally:
-            self.session_store.save_sessions(self.response)
-
-    @webapp2.cached_property
-    def session(self):
-        return self.session_store.get_session()
-
 
 class MainPage(BaseHandler):
     def get(self):
@@ -76,13 +63,6 @@ class MainPage(BaseHandler):
         appengine.monkeypatch()
 
         self.session[str(self.request.remote_addr)] = str(self.request.remote_addr)
-
-        log_query = Behavlog.query(Behavlog.remoaddr == str(self.request.remote_addr)).order(-Behavlog.startdate).fetch(5)
-
-        loglist = []
-
-        for alog in log_query:
-            loglist.append(alog)
 
         alog = Behavlog()
 
@@ -97,8 +77,32 @@ class MainPage(BaseHandler):
 
         alog.put()
 
+        self.redirect('/main/welcome')
+
+
+class Welcome(BaseHandler):
+    def get(self):
+        log_query = Behavlog.query(Behavlog.remoaddr == str(self.request.remote_addr)).order(-Behavlog.startdate).fetch(5)
+
+        loglist = []
+
+        for alog in log_query:
+            loglist.append(alog)
+        
+        videoid = 'none'
+
+        if 'videoid' in self.session:
+            videoid = self.session['videoid']
+
+        playlistid = 'none'
+
+        if 'playlistId' in self.session:
+            playlistid = self.session['playlistId']
+
         variables = {
         'text': 'Welcome at ' + str(self.request.remote_addr),
+        'videoid': videoid,
+        'playlistid': playlistid,
         'loglist': loglist
         }
 
@@ -106,151 +110,24 @@ class MainPage(BaseHandler):
         self.response.write(template.render(variables))
 
 
-class YouTubeShow(BaseHandler):
+class CentralPut(BaseHandler):
+    def post(self):
+        self.session['command'] = self.request.get('command')
+        self.redirect('/main/maineventhandler')
+
+
+class MainEventHandler(BaseHandler):
     def get(self):
-
-        try:
-            whoswho = self.session[str(self.request.remote_addr)]
-
-            log_query = Behavlog.query(Behavlog.remoaddr == str(self.request.remote_addr)).order(-Behavlog.startdate).fetch(1)
-
-            thislog = None
-
-            onlyone = True
-            for alog in log_query:
-                if onlyone:
-                    thislog = alog
-                    onlyone = False
-
-            thislog.vector[1] = 1
-
-            try:
-
-                youtube = build(YOUTUBE_API_SERVICE_NAME,YOUTUBE_API_VERSION,developerKey=DEVELOPER_KEY)
-                searchlist = youtube.search().list(q='Google Official',part='id,snippet',maxResults=5).execute()
-
-                videos = []
-                playlists = []
-
-                for item in searchlist.get('items',[]):
-                    if item['id']['kind'] == 'youtube#video':
-                        videos.append('%s' % (item['id']['videoId']))
-                    elif item['id']['kind'] == 'youtube#playlist':
-                        playlists.append('%s' % (item['id']['playlistId']))
-
-                self.session['videoid'] = videos[0]
-
-                self.redirect('/main/player')
-
-                #template_vars = {
-                #    'name' : whoswho,
-                #    'videos' : videos
-                #}
-
-                #template = JINJA_ENVIRONMENT.get_template('templates/youtube.html')
-                #self.response.write(template.render(template_vars))
-
-            except HttpError, e:
-                thislog.sflabel = True
-                self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
-
-        except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
-
-
-class PlayList(BaseHandler):
-    def get(self):
-        try:
-            whoswho = self.session[str(self.request.remote_addr)]
-
-            log_query = Behavlog.query(Behavlog.remoaddr == str(self.request.remote_addr)).order(-Behavlog.startdate).fetch(1)
-
-            thislog = None
-
-            onlyone = True
-            for alog in log_query:
-                if onlyone:
-                    thislog = alog
-                    onlyone = False
-
-            thislog.vector[2] = 1
-
-            try:
-
-                pPlaylistid = self.session['playlistId']
-
-                youtube = build(YOUTUBE_API_SERVICE_NAME,YOUTUBE_API_VERSION,developerKey=DEVELOPER_KEY)
-                plistitems = youtube.playlistItems().list(playlistId=pPlaylistid,part='id,snippet',maxResults=5).execute()
-
-                videos = []
-
-                for item in plistitems.get('items',[]):
-                    if item.get('snippet').get('resourceId').get('kind') == 'youtube#video':
-                        print item.get('snippet').get('resourceId').get('videoId')
-                        videos.append('%s' % (item.get('snippet').get('resourceId').get('videoId')))
-                        
-                self.session['videoid'] = videos[0]
-
-                self.redirect('/main/YouTubePlayer')
-
-            except HttpError, e:
-                thislog.sflabel = True
-                self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
-
-        except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
-
-
-class YouTubePlayer(BaseHandler):
-    def get(self):
-        videoid = self.session['videoid']
-        template_vars = {
-                    'name' : 'my',
-                    'youtubesrc' : ('http://www.youtube.com/embed/'+videoid)
-                }
-        template = JINJA_ENVIRONMENT.get_template('templates/player2.html')
-        self.response.write(template.render(template_vars))
-
-
-class GetChannelActivities(BaseHandler):
-    def get(self):
-        try:
-            whoswho = self.session[str(self.request.remote_addr)]
-
-            log_query = Behavlog.query(Behavlog.remoaddr == str(self.request.remote_addr)).order(-Behavlog.startdate).fetch(1)
-
-            thislog = None
-
-            onlyone = True
-            for alog in log_query:
-                if onlyone:
-                    thislog = alog
-                    onlyone = False
-
-            thislog.vector[0] = 1
-
-            try:
-
-                youtube = build(YOUTUBE_API_SERVICE_NAME,YOUTUBE_API_VERSION,developerKey=DEVELOPER_KEY)
-                activitylist = youtube.channels().list(part='snippet,contentDetails',mySubscribers=True,id='UCK8sQmJBp8GCxrOtXWBpyEA').execute()
-                
-                print json.dumps(activitylist)
-
-            except HttpError, e:
-                thislog.sflabel = True
-                self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
-
-        except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        if self.session['command'] == 'video':
+            self.redirect('/main/video')
+        elif self.session['command'] == 'playlists':
+            self.redirect('/main/playlist')
+        elif self.session['command'] == 'playlistitem':
+            self.redirect('/main/playlistitem')
+        elif self.session['command'] == 'playlistitemin':
+            self.redirect('/main/playlistitem')
+        elif self.session['command'] == 'playlistitemdel':
+            self.redirect('/main/playlistitem')
 
 
 class Authorized(BaseHandler):
@@ -259,7 +136,8 @@ class Authorized(BaseHandler):
         state = self.request.get('state')
         print(state)
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file('client_secret.json', scopes=['https://www.googleapis.com/auth/youtube'],state=state)
-        flow.redirect_uri = 'https://localhost:1338/main/red'
+        #flow.redirect_uri = 'https://localhost:1338/main/red'
+        flow.redirect_uri = 'http://localhost:8080/main/red'
         authorization_response = self.request.url
         flow.fetch_token(authorization_response=authorization_response)
         credentials = flow.credentials
@@ -272,7 +150,8 @@ class OauthPage(BaseHandler):
     def get(self):
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file('client_secret.json', scopes=['https://www.googleapis.com/auth/youtube'])
 
-        flow.redirect_uri = 'https://localhost:1338/main/red'
+        #flow.redirect_uri = 'https://localhost:1338/main/red'
+        flow.redirect_uri = 'http://localhost:8080/main/red'
 
         auth_url, state = flow.authorization_url(access_type='offline')
         #,prompt='consent'
@@ -286,28 +165,19 @@ class OauthReq(BaseHandler):
     def get(self):
         if 'credentials' not in self.session:
             return self.redirect('/main/oauth')
-        self.redirect('/main/')
-
-
-class History(BaseHandler):
-    def get(self):
-        credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
-
-        youtube = build(YOUTUBE_API_SERVICE_NAME,YOUTUBE_API_VERSION,credentials=credentials)
-
-        historylist = youtube.channels().list(part='snippet',mine='true').execute()
-
-        print json.dumps(historylist)
+        self.redirect('/main/main')
 
 
 app = webapp2.WSGIApplication([
-    ('/main/', MainPage),
+    ('/main/main', MainPage),
+    ('/main/welcome', Welcome),
     ('/main/comein',OauthReq),
-    ('/main/youtube', YouTubeShow),
-    ('/main/player', YouTubePlayer),
-    ('/main/activities', GetChannelActivities),
     ('/main/oauth', OauthPage),
     ('/main/red', Authorized),
-    ('/main/playlist', PlayList),
-    ('/main/history', History)
+    ('/main/centralput', CentralPut),
+    ('/main/maineventhandler', MainEventHandler),
+    ('/main/player', YouTubePlayer),
+    ('/main/video', R_Video),
+    ('/main/playlist', R_Playlist),
+    ('/main/playlistitem', R_PlayListItems)
 ], config=sconfig, debug=True)

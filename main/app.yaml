@@ -10,6 +10,9 @@ handlers:
 - url: /main/.*
   script: main.app
 
+env_variables:
+  OAUTHLIB_INSECURE_TRANSPORT: 1
+
 libraries:
 - name: jinja2
   version: "latest"

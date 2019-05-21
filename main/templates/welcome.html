@@ -5,15 +5,19 @@
   <body>
     <div><p>{{ text }}</p></div>
     <div>
-      <form action="{{ url }}" method="post">
-
+      <form action="/main/centralput" method="post">
+        <input type="radio" name="command" value="video">Videos!<br>
+        <input type="radio" name="command" value="playlists"/>Playlists!<br>
+        <input type="radio" name="command" value="playlistitem"/>ItemsOfPlaylist!<br>
+        <input type="radio" name="command" value="playlistitemin"/>InsertVideoToPlaylist!<br>
+        <input type="radio" name="command" value="playlistitemdel"/>DelVideoFromPlaylist!<br>
+        <input type="submit">
       </form>
     </div>
     <div><a href="/main/comein">Auth!</a></div>
     <div><a href="/main/player">Play!</a></div>
-    <div><a href="/main/youtube">Videos!</a></div>
-    <div><a href="/main/activities">Activities!</a></div>
-    <div><a href="/main/history">History!</a></div>
+    <div><p>videoId: {{ videoid }}</p></div>
+    <div><p>playlistId: {{ playlistid }}</p></div>
     {% for alog in loglist %}
     <div><p>{{ alog.startdate }} : {{ alog.vector }} : {{ alog.sflabel }}</p></div>
     {% endfor %}
