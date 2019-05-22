@@ -21,11 +21,9 @@ class R_Video(BaseHandler):
                     thislog = alog
                     onlyone = False
 
-            thislog.vector[0] = 1
-
             try:
                 youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,developerKey=Keys.DEVELOPER_KEY)
-                searchlist = youtube.search().list(q='Google Official',part='id,snippet',maxResults=5).execute()
+                searchlist = youtube.search().list(q='Google Official',part='snippet',type='video',maxResults=5).execute()
 
                 videos = []
 
@@ -35,15 +33,9 @@ class R_Video(BaseHandler):
 
                 self.session['videoid'] = videos[0]
 
+                thislog.vector[8] = 1
+
                 self.redirect('/main/welcome')
-
-                #template_vars = {
-                #    'name' : whoswho,
-                #    'videos' : videos
-                #}
-
-                #template = JINJA_ENVIRONMENT.get_template('templates/youtube.html')
-                #self.response.write(template.render(template_vars))
 
             except HttpError, e:
                 thislog.sflabel = True

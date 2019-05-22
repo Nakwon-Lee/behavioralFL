@@ -22,8 +22,6 @@ class R_PlayListItems(BaseHandler):
                     thislog = alog
                     onlyone = False
 
-            thislog.vector[2] = 1
-
             try:
 
                 pPlaylistid = self.session['playlistId']
@@ -44,22 +42,52 @@ class R_PlayListItems(BaseHandler):
                             itemids.append('%s' % (item.get('id')))
                     self.session['videoid'] = videos[0]
                     self.session['playlistitemid'] = itemids[0]
+
+                    thislog.vector[0] = 1
+
                 elif command == 'playlistitemin':
+
                     videoid = self.session['videoid']
 
                     body = {
-                        'kind' : 'youtube#playlistItem',
-                        'snippet' : {'playlistId' : pPlaylistid, 'resourceId' : {'kind':'youtube#video','videoId':videoid} }
+                        'snippet' : {
+                            'playlistId' : pPlaylistid, 
+                            'resourceId' : {
+                                'kind':'youtube#video',
+                                'videoId':videoid
+                            } 
+                        }
                     }
 
                     youtube.playlistItems().insert(part='snippet',body=body).execute()
+
+                    thislog.vector[1] = 1
+
                 elif command == 'playlistitemdel':
                     playlistitemid = self.session['playlistitemid']
                     youtube.playlistItems().delete(id=playlistitemid).execute()
 
+                    thislog.vector[2] = 1
+
                 elif command == 'playlistitemupdate':
-                    playlistitemid = self.session['playlistitemupdate']
-                    youtube.playlistItems().delete(id=playlistitemid).execute()
+                    playlistitemid = self.session['playlistitemid']
+                    videoid = self.session['videoid']
+
+                    body = {
+                        'id' : playlistitemid,
+                        'snippet' : {
+                            'playlistId' : pPlaylistid,
+                            'resourceId' : {
+                                'kind':'youtube#video',
+                                'videoId': videoid 
+                            },
+                            'position' : 0
+                        }
+                    }
+
+                    youtube.playlistItems().update(part='snippet',body=body).execute()
+
+                    thislog.vector[3] = 1
 
                 self.redirect('/main/welcome')
 

@@ -26,13 +26,15 @@ from R_Player import YouTubePlayer
 from R_Video import R_Video
 from R_Playlist import R_Playlist
 from R_PlaylistItems import R_PlayListItems
+from R_Channels import R_Channels
+from R_ChannelSections import R_ChannelSections
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     autoescape=True,
     extensions=['jinja2.ext.autoescape'])
 
-LIST_LENGTH = 3
+LIST_LENGTH = 37
 
 sconfig = {}
 sconfig['webapp2_extras.sessions'] = {'secret_key':'472405203058'}
@@ -99,11 +101,17 @@ class Welcome(BaseHandler):
         if 'playlistId' in self.session:
             playlistid = self.session['playlistId']
 
+        channelid = 'none'
+
+        if 'channel' in self.session:
+            channelid = self.session['channel']
+
         variables = {
         'text': 'Welcome at ' + str(self.request.remote_addr),
         'videoid': videoid,
         'playlistid': playlistid,
-        'loglist': loglist
+        'loglist': loglist,
+        'channelid' : channelid
         }
 
         template = JINJA_ENVIRONMENT.get_template('templates/welcome.html')
@@ -122,12 +130,33 @@ class MainEventHandler(BaseHandler):
             self.redirect('/main/video')
         elif self.session['command'] == 'playlists':
             self.redirect('/main/playlist')
+        elif self.session['command'] == 'playlistsnew':
+            self.redirect('/main/playlist')
+        elif self.session['command'] == 'playlistsupdate':
+            self.redirect('/main/playlist')
+        elif self.session['command'] == 'playlistsrm':
+            self.redirect('/main/playlist')
         elif self.session['command'] == 'playlistitem':
             self.redirect('/main/playlistitem')
         elif self.session['command'] == 'playlistitemin':
             self.redirect('/main/playlistitem')
         elif self.session['command'] == 'playlistitemdel':
             self.redirect('/main/playlistitem')
+        elif self.session['command'] == 'playlistitemupdate':
+            self.redirect('/main/playlistitem')
+        elif self.session['command'] == 'channels':
+            self.redirect('/main/channels')
+        elif self.session['command'] == 'channelsec':
+            self.redirect('/main/channelsections')
+        elif self.session['command'] == 'channelsecin':
+            self.redirect('/main/channelsections')
+        elif self.session['command'] == 'channelsecdel':
+            self.redirect('/main/channelsections')
+        elif self.session['command'] == 'channelsecup':
+            self.redirect('/main/channelsections')
+        else:
+            self.response.status_int = 401
+            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
 
 
 class Authorized(BaseHandler):
@@ -179,5 +208,7 @@ app = webapp2.WSGIApplication([
     ('/main/player', YouTubePlayer),
     ('/main/video', R_Video),
     ('/main/playlist', R_Playlist),
-    ('/main/playlistitem', R_PlayListItems)
+    ('/main/playlistitem', R_PlayListItems),
+    ('/main/channels', R_Channels),
+    ('/main/channelsections', R_ChannelSections)
 ], config=sconfig, debug=True)
