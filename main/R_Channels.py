@@ -35,10 +35,15 @@ class R_Channels(BaseHandler):
 
                     channelslist = []
 
+                    items = []
+
                     for item in channelsitems.get('items',[]):
                         channelslist.append('%s' % (item.get('id')))
+                        items.append(item)
 
-                    self.session['channel'] = item.get('id')
+                    self.session['channel'] = channelslist[0]
+
+                    self.session['uploads'] = items[0].get('contentDetails').get('relatedPlaylists').get('uploads')
 
                     thislog.vector[9] = 1
 

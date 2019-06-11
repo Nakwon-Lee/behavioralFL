@@ -6,7 +6,7 @@
     <div><p>{{ text }}</p></div>
     <div>
       <form action="/main/centralput" method="post">
-        <input type="radio" name="command" value="video">Videos!<br>
+        <input type="radio" name="command" value="search">Search!<br>
         <input type="radio" name="command" value="playlists"/>Playlists!<br>
         <input type="radio" name="command" value="playlistsnew"/>AddPlaylist!<br>
         <input type="radio" name="command" value="playlistsupdate"/>UpdatePlaylist!<br>
@@ -20,6 +20,10 @@
         <input type="radio" name="command" value="channelsecin"/>AddChannelSection!<br>
         <input type="radio" name="command" value="channelsecdel"/>RmChannelSection!<br>
         <input type="radio" name="command" value="channelsecup"/>UpChannelSection!<br>
+        <input type="radio" name="command" value="videos"/>Videos!<br>
+        <input type="radio" name="command" value="videosin"/>InVideos!<br>
+        <input type="radio" name="command" value="videosrm"/>RmVideo!<br>
+        <input type="radio" name="command" value="videosup"/>UpVideo!<br>
         <input type="submit">
       </form>
     </div>
@@ -27,7 +31,9 @@
     <div><a href="/main/player">Play!</a></div>
     <div><p>videoId: {{ videoid }}</p></div>
     <div><p>playlistId: {{ playlistid }}</p></div>
+    <div><p>playlistitemId: {{ playlistitemid }}</p></div>
     <div><p>channelId: {{ channelid }}</p></div>
+    <div><p>uploadsId: {{ uploadsid }}</p></div>
     {% for alog in loglist %}
     <div><p>{{ alog.startdate }} : {{ alog.vector }} : {{ alog.sflabel }}</p></div>
     {% endfor %}

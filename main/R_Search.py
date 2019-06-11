@@ -5,7 +5,7 @@ from apiclient.discovery import build
 
 import Keys
 
-class R_Video(BaseHandler):
+class R_Search(BaseHandler):
     def get(self):
 
         try:

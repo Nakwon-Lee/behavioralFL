@@ -24,7 +24,6 @@ class R_PlayListItems(BaseHandler):
 
             try:
 
-                pPlaylistid = self.session['playlistId']
                 command = self.session['command']
 
                 credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
@@ -32,7 +31,10 @@ class R_PlayListItems(BaseHandler):
                 youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
 
                 if command == 'playlistitem':
-                    plistitems = youtube.playlistItems().list(playlistId=pPlaylistid,part='id,snippet',maxResults=5).execute()
+                    # pPlaylistid = self.session['playlistId']
+                    # plistitems = youtube.playlistItems().list(playlistId=pPlaylistid,part='id,snippet',maxResults=5).execute()
+                    uploadsid = self.session['uploads']
+                    plistitems = youtube.playlistItems().list(playlistId=uploadsid,part='id,snippet',maxResults=5).execute()
                     videos = []
                     itemids = []
                     for item in plistitems.get('items',[]):
@@ -46,6 +48,8 @@ class R_PlayListItems(BaseHandler):
                     thislog.vector[0] = 1
 
                 elif command == 'playlistitemin':
+
+                    pPlaylistid = self.session['playlistId']
 
                     videoid = self.session['videoid']
 
@@ -70,6 +74,7 @@ class R_PlayListItems(BaseHandler):
                     thislog.vector[2] = 1
 
                 elif command == 'playlistitemupdate':
+                    pPlaylistid = self.session['playlistId']
                     playlistitemid = self.session['playlistitemid']
                     videoid = self.session['videoid']
 

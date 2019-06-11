@@ -23,11 +23,12 @@ import webapp2
 import jinja2
 
 from R_Player import YouTubePlayer
-from R_Video import R_Video
+from R_Search import R_Search
 from R_Playlist import R_Playlist
 from R_PlaylistItems import R_PlayListItems
 from R_Channels import R_Channels
 from R_ChannelSections import R_ChannelSections
+from R_Videos import R_Videos
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -106,10 +107,22 @@ class Welcome(BaseHandler):
         if 'channel' in self.session:
             channelid = self.session['channel']
 
+        uploadsid = 'none'
+
+        if 'uploads' in self.session:
+            uploadsid = self.session['uploads']
+
+        playlistitemid = 'none'
+
+        if 'playlistitemid' in self.session:
+            playlistitemid = self.session['playlistitemid']
+
         variables = {
         'text': 'Welcome at ' + str(self.request.remote_addr),
         'videoid': videoid,
         'playlistid': playlistid,
+        'playlistitemid': playlistitemid,
+        'uploadsid': uploadsid,
         'loglist': loglist,
         'channelid' : channelid
         }
@@ -126,8 +139,8 @@ class CentralPut(BaseHandler):
 
 class MainEventHandler(BaseHandler):
     def get(self):
-        if self.session['command'] == 'video':
-            self.redirect('/main/video')
+        if self.session['command'] == 'search':
+            self.redirect('/main/search')
         elif self.session['command'] == 'playlists':
             self.redirect('/main/playlist')
         elif self.session['command'] == 'playlistsnew':
@@ -154,6 +167,14 @@ class MainEventHandler(BaseHandler):
             self.redirect('/main/channelsections')
         elif self.session['command'] == 'channelsecup':
             self.redirect('/main/channelsections')
+        elif self.session['command'] == 'videos':
+            self.redirect('/main/videos')
+        elif self.session['command'] == 'videosin':
+            self.redirect('/main/videos')
+        elif self.session['command'] == 'videosrm':
+            self.redirect('/main/videos')
+        elif self.session['command'] == 'videosup':
+            self.redirect('/main/videos')
         else:
             self.response.status_int = 401
             self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
@@ -206,9 +227,10 @@ app = webapp2.WSGIApplication([
     ('/main/centralput', CentralPut),
     ('/main/maineventhandler', MainEventHandler),
     ('/main/player', YouTubePlayer),
-    ('/main/video', R_Video),
+    ('/main/search', R_Search),
     ('/main/playlist', R_Playlist),
     ('/main/playlistitem', R_PlayListItems),
     ('/main/channels', R_Channels),
-    ('/main/channelsections', R_ChannelSections)
+    ('/main/channelsections', R_ChannelSections),
+    ('/main/videos', R_Videos)
 ], config=sconfig, debug=True)
