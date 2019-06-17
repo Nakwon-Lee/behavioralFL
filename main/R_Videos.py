@@ -66,9 +66,16 @@ class R_Videos(BaseHandler):
                 elif command == 'videos':
 
                     videoid = self.session['videoid']
-                    videostat = youtube.videos().list(id=videoid,part='snippet,statistics').execute()
+                    videostat = youtube.videos().list(id=videoid,part='snippet').execute()
 
-                    print videostat
+                    items = []
+
+                    for item in videostat.get('items',[]):
+                        items.append(item)
+
+                    videotitle = items[0].get('snippet').get('title')
+
+                    self.session['videotitle'] = videotitle
 
                     thislog.vector[16] = 1
 

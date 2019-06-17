@@ -29,6 +29,7 @@ from R_PlaylistItems import R_PlayListItems
 from R_Channels import R_Channels
 from R_ChannelSections import R_ChannelSections
 from R_Videos import R_Videos
+from R_Caption import R_Caption
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -117,9 +118,15 @@ class Welcome(BaseHandler):
         if 'playlistitemid' in self.session:
             playlistitemid = self.session['playlistitemid']
 
+        videotitle = 'none'
+
+        if 'videotitle' in self.session:
+            videotitle = self.session['videotitle']
+
         variables = {
         'text': 'Welcome at ' + str(self.request.remote_addr),
         'videoid': videoid,
+        'videotitle': videotitle,
         'playlistid': playlistid,
         'playlistitemid': playlistitemid,
         'uploadsid': uploadsid,
@@ -175,6 +182,8 @@ class MainEventHandler(BaseHandler):
             self.redirect('/main/videos')
         elif self.session['command'] == 'videosup':
             self.redirect('/main/videos')
+        elif self.session['command'] == 'captions':
+            self.redirect('/main/captions')
         else:
             self.response.status_int = 401
             self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
@@ -232,5 +241,6 @@ app = webapp2.WSGIApplication([
     ('/main/playlistitem', R_PlayListItems),
     ('/main/channels', R_Channels),
     ('/main/channelsections', R_ChannelSections),
-    ('/main/videos', R_Videos)
+    ('/main/videos', R_Videos),
+    ('/main/captions', R_Caption)
 ], config=sconfig, debug=True)
