@@ -137,6 +137,7 @@ class R_Videos(BaseHandler):
 
             except HttpError, e:
                 thislog.sflabel = True
+                print(e)
                 self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()

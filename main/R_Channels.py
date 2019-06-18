@@ -47,6 +47,23 @@ class R_Channels(BaseHandler):
 
                     thislog.vector[9] = 1
 
+                elif command == 'channelsup':
+                    channelid = self.session['channel']
+                    bannerurl = self.session['bannerurl']
+
+                    body = {
+                        'id' : channelid,
+                        'brandingSetting' : {
+                            'image' : {
+                                'bannerExternalUrl' : bannerurl
+                            }
+                        }
+                    }
+
+                    youtube.channels().update(part='id',body=body).execute()
+
+                    thislog.vector[32] = 1
+
                 self.redirect('/main/welcome')
 
             except HttpError, e:

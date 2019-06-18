@@ -30,6 +30,10 @@ from R_Channels import R_Channels
 from R_ChannelSections import R_ChannelSections
 from R_Videos import R_Videos
 from R_Caption import R_Caption
+from R_CommentThread import R_CommentThread
+from R_Comment import R_Comment
+from R_Activity import R_Activity
+from R_ChannelBanner import R_ChannelBanner
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -123,13 +127,43 @@ class Welcome(BaseHandler):
         if 'videotitle' in self.session:
             videotitle = self.session['videotitle']
 
+        captionid = 'none'
+
+        if 'captionid' in self.session:
+            captionid = self.session['captionid']
+
+        cmtthdid = 'none'
+
+        if 'cmtthdid' in self.session:
+            cmtthdid = self.session['cmtthdid']
+
+        commentid = 'none'
+
+        if 'commentid' in self.session:
+            commentid = self.session['commentid']
+
+        activityid = 'none'
+
+        if 'activityid' in self.session:
+            activityid = self.session['activityid']
+
+        bannerurl = 'none'
+
+        if 'bannerurl' in self.session:
+            bannerurl = self.session['bannerurl']
+
         variables = {
         'text': 'Welcome at ' + str(self.request.remote_addr),
         'videoid': videoid,
         'videotitle': videotitle,
+        'cmtthdid': cmtthdid,
+        'activityid': activityid,
+        'bannerurl': bannerurl,
+        'commentid': commentid,
         'playlistid': playlistid,
         'playlistitemid': playlistitemid,
         'uploadsid': uploadsid,
+        'captionid': captionid,
         'loglist': loglist,
         'channelid' : channelid
         }
@@ -184,6 +218,38 @@ class MainEventHandler(BaseHandler):
             self.redirect('/main/videos')
         elif self.session['command'] == 'captions':
             self.redirect('/main/captions')
+        elif self.session['command'] == 'captionsin':
+            self.redirect('/main/captions')
+        elif self.session['command'] == 'captionsdw':
+            self.redirect('/main/captions')
+        elif self.session['command'] == 'captionsrm':
+            self.redirect('/main/captions')
+        elif self.session['command'] == 'captionsup':
+            self.redirect('/main/captions')
+        elif self.session['command'] == 'cmtthds':
+            self.redirect('/main/cmtthds')
+        elif self.session['command'] == 'cmtthdsin':
+            self.redirect('/main/cmtthds')
+        elif self.session['command'] == 'cmtthdsup':
+            self.redirect('/main/cmtthds')
+        elif self.session['command'] == 'comments':
+            self.redirect('/main/comments')
+        elif self.session['command'] == 'commentsin':
+            self.redirect('/main/comments')
+        elif self.session['command'] == 'commentsup':
+            self.redirect('/main/comments')
+        elif self.session['command'] == 'commentsrm':
+            self.redirect('/main/comments')
+        elif self.session['command'] == 'activities':
+            self.redirect('/main/activity')
+        elif self.session['command'] == 'activitiesin':
+            self.redirect('/main/activity')
+        elif self.session['command'] == 'channelbanner':
+            self.redirect('/main/channelbanner')
+        elif self.session['command'] == 'channelsup':
+            self.redirect('/main/channels')
+        elif self.session['command'] == 'guideCategory':
+            self.redirect('/main/channelbanner')
         else:
             self.response.status_int = 401
             self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
@@ -194,7 +260,7 @@ class Authorized(BaseHandler):
         #print(self.request.url)
         state = self.request.get('state')
         print(state)
-        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file('client_secret.json', scopes=['https://www.googleapis.com/auth/youtube'],state=state)
+        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file('client_secret.json', scopes=['https://www.googleapis.com/auth/youtube.force-ssl'],state=state)
         #flow.redirect_uri = 'https://localhost:1338/main/red'
         flow.redirect_uri = 'http://localhost:8080/main/red'
         authorization_response = self.request.url
@@ -207,7 +273,7 @@ class Authorized(BaseHandler):
 
 class OauthPage(BaseHandler):
     def get(self):
-        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file('client_secret.json', scopes=['https://www.googleapis.com/auth/youtube'])
+        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file('client_secret.json', scopes=['https://www.googleapis.com/auth/youtube.force-ssl'])
 
         #flow.redirect_uri = 'https://localhost:1338/main/red'
         flow.redirect_uri = 'http://localhost:8080/main/red'
@@ -242,5 +308,9 @@ app = webapp2.WSGIApplication([
     ('/main/channels', R_Channels),
     ('/main/channelsections', R_ChannelSections),
     ('/main/videos', R_Videos),
-    ('/main/captions', R_Caption)
+    ('/main/captions', R_Caption),
+    ('/main/cmtthds', R_CommentThread),
+    ('/main/comments', R_Comment),
+    ('/main/activity', R_Activity),
+    ('/main/channelbanner', R_ChannelBanner)
 ], config=sconfig, debug=True)

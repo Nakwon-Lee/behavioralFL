@@ -25,6 +25,22 @@
         <input type="radio" name="command" value="videosrm"/>RmVideo!<br>
         <input type="radio" name="command" value="videosup"/>UpVideo!<br>
         <input type="radio" name="command" value="captions"/>Captions!<br>
+        <input type="radio" name="command" value="captionsin"/>Captionsin!<br>
+        <input type="radio" name="command" value="captionsdw"/>Captionsdw!<br>
+        <input type="radio" name="command" value="captionsrm"/>Captionsrm!<br>
+        <input type="radio" name="command" value="captionsup"/>Captionsup!<br>
+        <input type="radio" name="command" value="cmtthds"/>CmtThds!<br>
+        <input type="radio" name="command" value="cmtthdsin"/>CmtThdsin!<br>
+        <input type="radio" name="command" value="cmtthdsup"/>CmtThdsup!<br>
+        <input type="radio" name="command" value="comments"/>Comments!<br>
+        <input type="radio" name="command" value="commentsin"/>Commentsin!<br>
+        <input type="radio" name="command" value="commentsup"/>Commentsup!<br>
+        <input type="radio" name="command" value="commentsrm"/>Commentsrm!<br>
+        <input type="radio" name="command" value="activities"/>Activities!<br>
+        <input type="radio" name="command" value="activitiesin"/>Activitiesin!<br>
+        <input type="radio" name="command" value="channelbanner"/>ChannelBanner!<br>
+        <input type="radio" name="command" value="channelsup"/>Channelsup!<br>
+        <input type="radio" name="command" value="guideCategory"/>GuideCategory!<br>
         <input type="submit">
       </form>
     </div>
@@ -34,6 +50,11 @@
     <div><p>title: {{ videotitle }}</p></div>
     <div><p>playlistId: {{ playlistid }}</p></div>
     <div><p>playlistitemId: {{ playlistitemid }}</p></div>
+    <div><p>cmtthdId: {{ cmtthdid }}</p></div>
+    <div><p>commentId: {{ commentid }}</p></div>
+    <div><p>activityId: {{ activityid }}</p></div>
+    <div><p>bannerurl: {{ bannerurl }}</p></div>
+    <div><p>captionId: {{ captionid }}</p></div>
     <div><p>channelId: {{ channelid }}</p></div>
     <div><p>uploadsId: {{ uploadsid }}</p></div>
     {% for alog in loglist %}
