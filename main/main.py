@@ -72,6 +72,8 @@ class MainPage(BaseHandler):
 
         self.session[str(self.request.remote_addr)] = str(self.request.remote_addr)
 
+        self.session['cstate'] = 0
+
         alog = Behavlog()
 
         alog.remoaddr = self.session[str(self.request.remote_addr)]
@@ -152,8 +154,14 @@ class Welcome(BaseHandler):
         if 'bannerurl' in self.session:
             bannerurl = self.session['bannerurl']
 
+        currstate = 0
+
+        if 'cstate' in self.session:
+            currstate = self.session['cstate']
+
         variables = {
         'text': 'Welcome at ' + str(self.request.remote_addr),
+        'state': currstate,
         'videoid': videoid,
         'videotitle': videotitle,
         'cmtthdid': cmtthdid,
@@ -171,6 +179,8 @@ class Welcome(BaseHandler):
         template = JINJA_ENVIRONMENT.get_template('templates/welcome.html')
         self.response.write(template.render(variables))
 
+        if self.session['cstate'] == 14:
+            self.redirect('/main/comein')
 
 class CentralPut(BaseHandler):
     def post(self):
@@ -290,7 +300,8 @@ class OauthReq(BaseHandler):
     def get(self):
         if 'credentials' not in self.session:
             return self.redirect('/main/oauth')
-        self.redirect('/main/main')
+        self.session['cstate'] = 14
+        self.redirect('/main/welcome')
 
 
 app = webapp2.WSGIApplication([
