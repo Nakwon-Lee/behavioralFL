@@ -1,11 +1,18 @@
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
+import random
 import Keys
 
-class R_Search(BaseHandler):
+class R_Search():
+
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
 
         try:
@@ -31,18 +38,22 @@ class R_Search(BaseHandler):
                     if item['id']['kind'] == 'youtube#video':
                         videos.append('%s' % (item['id']['videoId']))
 
-                self.session['videoid'] = videos[0]
+                idx = random.randrange(0,len(videos))
 
-                thislog.vector[8] = 1
+                self.session['videoid'] = videos[idx]
 
-                self.redirect('/main/welcome')
+                thislog.vector[20] = 1
 
             except HttpError, e:
                 thislog.sflabel = True
-                self.response.write('<html><body><p>http error</p></body></html>')
+                print(e)
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on search")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

@@ -1,6 +1,5 @@
 import io
 
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
@@ -9,9 +8,17 @@ from apiclient.http import MediaIoBaseDownload
 
 import google.oauth2.credentials
 
+import random
 import Keys
 
-class R_Caption(BaseHandler):
+class R_Caption():
+
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
 
         try:
@@ -43,11 +50,11 @@ class R_Caption(BaseHandler):
                     for item in captions.get('items',[]):
                         items.append(item)
 
-                    print(items[0].get('id'))
+                    idx = random.randrange(0,len(items))
 
-                    self.session['captionid'] = items[0].get('id')
+                    self.session['captionid'] = items[idx].get('id')
 
-                    thislog.vector[18] = 1
+                    thislog.vector[23] = 1
 
                 elif command == 'captionsin':
                     videoid = self.session['videoid']
@@ -68,7 +75,7 @@ class R_Caption(BaseHandler):
 
                     print(response)
 
-                    thislog.vector[19] = 1
+                    thislog.vector[24] = 1
 
                 elif command == 'captionsdw':
                     captionid = self.session['captionid']
@@ -84,30 +91,14 @@ class R_Caption(BaseHandler):
                     while not complete:
                         status, complete = download.next_chunk()
 
-                    thislog.vector[20] = 1
-
-                elif command == 'captionsdw':
-                    captionid = self.session['captionid']
-
-                    request = youtube.captions().download(id=captionid)
-
-                    fh = io.FileIO('down-cap.srt','wb')
-
-                    download = MediaIoBaseDownload(fh,request)
-
-                    complete = False
-
-                    while not complete:
-                        status, complete = download.next_chunk()
-
-                    thislog.vector[20] = 1
+                    thislog.vector[37] = 1
                 
                 elif command == 'captionsrm':
                     captionid = self.session['captionid']
 
                     request = youtube.captions().delete(id=captionid).execute()
 
-                    thislog.vector[21] = 1
+                    thislog.vector[26] = 1
 
                 elif command == 'captionsup':
                     videoid = self.session['videoid']
@@ -126,17 +117,18 @@ class R_Caption(BaseHandler):
 
                     request = youtube.captions().update(part='snippet',body=body,media_body=medf).execute()
 
-                    thislog.vector[22] = 1
-
-                self.redirect('/main/welcome')
+                    thislog.vector[25] = 1
 
             except HttpError, e:
                 thislog.sflabel = True
                 print(e)
-                self.response.write('<html><body><p>http error</p></body></html>')
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on caption")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

@@ -3,11 +3,19 @@ from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
+import random
 import google.oauth2.credentials
 
 import Keys
 
-class R_Playlist(BaseHandler):
+class R_Playlist():
+
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
 
         try:
@@ -39,10 +47,15 @@ class R_Playlist(BaseHandler):
                     for item in playlistlist.get('items',[]):
                         print item.get('id')
                         playlists.append('%s' % (item.get('id')))
-                        
-                    self.session['playlistId'] = playlists[0]
 
-                    thislog.vector[4] = 1
+                    if len(playlists) > 0:
+                        idx = random.randrange(0,len(playlists))
+                        self.session['playlistId'] = playlists[idx]
+                        self.session['playlistIdmine'] = True
+                        self.session['cstate'] = 3
+                    else:
+                        pass
+                    thislog.vector[1] = 1
 
                 elif command == 'playlistsnew':
 
@@ -58,7 +71,7 @@ class R_Playlist(BaseHandler):
 
                     youtube.playlists().insert(part='snippet,status', body=body).execute()
 
-                    thislog.vector[5] = 1
+                    thislog.vector[17] = 1
 
                 elif command == 'playlistsupdate':
 
@@ -74,23 +87,25 @@ class R_Playlist(BaseHandler):
 
                     youtube.playlists().update(part='snippet',body=body).execute()
 
-                    thislog.vector[6] = 1
+                    thislog.vector[18] = 1
 
                 elif command == 'playlistsrm':
 
                     pPlaylistid = self.session['playlistId']
                     youtube.playlists().delete(id=pPlaylistid).execute()
 
-                    thislog.vector[7] = 1
-
-                self.redirect('/main/welcome')
+                    thislog.vector[19] = 1
 
             except HttpError, e:
                 thislog.sflabel = True
-                self.response.write('<html><body><p>http error</p></body></html>')
+                print(e)
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on plist")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

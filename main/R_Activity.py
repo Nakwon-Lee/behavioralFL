@@ -1,13 +1,20 @@
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
 import google.oauth2.credentials
 
+import random
 import Keys
 
-class R_Activity(BaseHandler):
+class R_Activity():
+
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
 
         try:
@@ -38,9 +45,11 @@ class R_Activity(BaseHandler):
                     for item in comments.get('items',[]):
                         items.append(item)
 
-                    self.session['activityid'] = items[0].get('id')
+                    idx = random.randrange(0,len(items))
 
-                    thislog.vector[30] = 1
+                    self.session['activityid'] = items[idx].get('id')
+
+                    thislog.vector[21] = 1
 
                 elif command == 'activitiesin':
 
@@ -64,17 +73,18 @@ class R_Activity(BaseHandler):
 
                     print(response)
 
-                    thislog.vector[31] = 1
-
-                self.redirect('/main/welcome')
+                    thislog.vector[22] = 1
 
             except HttpError, e:
                 thislog.sflabel = True
                 print(e)
-                self.response.write('<html><body><p>http error</p></body></html>')
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on activities")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

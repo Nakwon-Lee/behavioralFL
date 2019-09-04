@@ -34,13 +34,15 @@ from R_CommentThread import R_CommentThread
 from R_Comment import R_Comment
 from R_Activity import R_Activity
 from R_ChannelBanner import R_ChannelBanner
+from R_Random import R_Random
+from ExportLogs import ExportLogs
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     autoescape=True,
     extensions=['jinja2.ext.autoescape'])
 
-LIST_LENGTH = 37
+LIST_LENGTH = 38
 
 sconfig = {}
 sconfig['webapp2_extras.sessions'] = {'secret_key':'472405203058'}
@@ -98,66 +100,39 @@ class Welcome(BaseHandler):
 
         for alog in log_query:
             loglist.append(alog)
+
+        self.session['videoid'] = 'none'
+        self.session['videomine'] = False
+        self.session['playlistId'] = 'none'
+        self.session['playlistIdmine'] = False
+        self.session['channel'] = 'none'
+        self.session['channelmine'] = False
+        self.session['uploads'] = 'none'
+        self.session['playlistitemid'] = 'none'
+        self.session['playlistitemmine'] = False
+        self.session['videotitle'] = 'none'
+        self.session['captionid'] = 'none'
+        self.session['cmtthdid'] = 'none'
+        self.session['cmtthdmine'] = False
+        self.session['commentid'] = 'none'
+        self.session['activityid'] = 'none'
+        self.session['bannerurl'] = 'none'
+        self.session['channelsec'] = 'none'
         
-        videoid = 'none'
+        videoid = self.session['videoid']
+        playlistid = self.session['playlistId']
+        channelid = self.session['channel']
+        uploadsid = self.session['uploads']
+        playlistitemid = self.session['playlistitemid']
+        videotitle = self.session['videotitle']
+        captionid = self.session['captionid']
+        cmtthdid = self.session['cmtthdid']
+        commentid = self.session['commentid']
+        activityid = self.session['activityid']
+        bannerurl = self.session['bannerurl']
+        currstate = self.session['cstate']
 
-        if 'videoid' in self.session:
-            videoid = self.session['videoid']
-
-        playlistid = 'none'
-
-        if 'playlistId' in self.session:
-            playlistid = self.session['playlistId']
-
-        channelid = 'none'
-
-        if 'channel' in self.session:
-            channelid = self.session['channel']
-
-        uploadsid = 'none'
-
-        if 'uploads' in self.session:
-            uploadsid = self.session['uploads']
-
-        playlistitemid = 'none'
-
-        if 'playlistitemid' in self.session:
-            playlistitemid = self.session['playlistitemid']
-
-        videotitle = 'none'
-
-        if 'videotitle' in self.session:
-            videotitle = self.session['videotitle']
-
-        captionid = 'none'
-
-        if 'captionid' in self.session:
-            captionid = self.session['captionid']
-
-        cmtthdid = 'none'
-
-        if 'cmtthdid' in self.session:
-            cmtthdid = self.session['cmtthdid']
-
-        commentid = 'none'
-
-        if 'commentid' in self.session:
-            commentid = self.session['commentid']
-
-        activityid = 'none'
-
-        if 'activityid' in self.session:
-            activityid = self.session['activityid']
-
-        bannerurl = 'none'
-
-        if 'bannerurl' in self.session:
-            bannerurl = self.session['bannerurl']
-
-        currstate = 0
-
-        if 'cstate' in self.session:
-            currstate = self.session['cstate']
+        self.session['count'] = 0
 
         variables = {
         'text': 'Welcome at ' + str(self.request.remote_addr),
@@ -179,8 +154,8 @@ class Welcome(BaseHandler):
         template = JINJA_ENVIRONMENT.get_template('templates/welcome.html')
         self.response.write(template.render(variables))
 
-        if self.session['cstate'] == 14:
-            self.redirect('/main/comein')
+        #if self.session['cstate'] == 14:
+        #    self.redirect('/main/comein')
 
 class CentralPut(BaseHandler):
     def post(self):
@@ -190,76 +165,80 @@ class CentralPut(BaseHandler):
 
 class MainEventHandler(BaseHandler):
     def get(self):
-        if self.session['command'] == 'search':
-            self.redirect('/main/search')
-        elif self.session['command'] == 'playlists':
-            self.redirect('/main/playlist')
-        elif self.session['command'] == 'playlistsnew':
-            self.redirect('/main/playlist')
-        elif self.session['command'] == 'playlistsupdate':
-            self.redirect('/main/playlist')
-        elif self.session['command'] == 'playlistsrm':
-            self.redirect('/main/playlist')
-        elif self.session['command'] == 'playlistitem':
-            self.redirect('/main/playlistitem')
-        elif self.session['command'] == 'playlistitemin':
-            self.redirect('/main/playlistitem')
-        elif self.session['command'] == 'playlistitemdel':
-            self.redirect('/main/playlistitem')
-        elif self.session['command'] == 'playlistitemupdate':
-            self.redirect('/main/playlistitem')
-        elif self.session['command'] == 'channels':
-            self.redirect('/main/channels')
-        elif self.session['command'] == 'channelsec':
-            self.redirect('/main/channelsections')
-        elif self.session['command'] == 'channelsecin':
-            self.redirect('/main/channelsections')
-        elif self.session['command'] == 'channelsecdel':
-            self.redirect('/main/channelsections')
-        elif self.session['command'] == 'channelsecup':
-            self.redirect('/main/channelsections')
-        elif self.session['command'] == 'videos':
-            self.redirect('/main/videos')
-        elif self.session['command'] == 'videosin':
-            self.redirect('/main/videos')
-        elif self.session['command'] == 'videosrm':
-            self.redirect('/main/videos')
-        elif self.session['command'] == 'videosup':
-            self.redirect('/main/videos')
-        elif self.session['command'] == 'captions':
-            self.redirect('/main/captions')
-        elif self.session['command'] == 'captionsin':
-            self.redirect('/main/captions')
-        elif self.session['command'] == 'captionsdw':
-            self.redirect('/main/captions')
-        elif self.session['command'] == 'captionsrm':
-            self.redirect('/main/captions')
-        elif self.session['command'] == 'captionsup':
-            self.redirect('/main/captions')
-        elif self.session['command'] == 'cmtthds':
-            self.redirect('/main/cmtthds')
-        elif self.session['command'] == 'cmtthdsin':
-            self.redirect('/main/cmtthds')
-        elif self.session['command'] == 'cmtthdsup':
-            self.redirect('/main/cmtthds')
-        elif self.session['command'] == 'comments':
-            self.redirect('/main/comments')
-        elif self.session['command'] == 'commentsin':
-            self.redirect('/main/comments')
-        elif self.session['command'] == 'commentsup':
-            self.redirect('/main/comments')
-        elif self.session['command'] == 'commentsrm':
-            self.redirect('/main/comments')
-        elif self.session['command'] == 'activities':
-            self.redirect('/main/activity')
-        elif self.session['command'] == 'activitiesin':
-            self.redirect('/main/activity')
-        elif self.session['command'] == 'channelbanner':
-            self.redirect('/main/channelbanner')
-        elif self.session['command'] == 'channelsup':
-            self.redirect('/main/channels')
-        elif self.session['command'] == 'guideCategory':
-            self.redirect('/main/channelbanner')
+        #if self.session['command'] == 'search':
+        #    self.redirect('/main/search')
+        #elif self.session['command'] == 'playlists':
+        #    self.redirect('/main/playlist')
+        #elif self.session['command'] == 'playlistsnew':
+        #    self.redirect('/main/playlist')
+        #elif self.session['command'] == 'playlistsupdate':
+        #    self.redirect('/main/playlist')
+        #elif self.session['command'] == 'playlistsrm':
+        #    self.redirect('/main/playlist')
+        #elif self.session['command'] == 'playlistitem':
+        #    self.redirect('/main/playlistitem')
+        #elif self.session['command'] == 'playlistitemin':
+        #    self.redirect('/main/playlistitem')
+        #elif self.session['command'] == 'playlistitemdel':
+        #    self.redirect('/main/playlistitem')
+        #elif self.session['command'] == 'playlistitemupdate':
+        #    self.redirect('/main/playlistitem')
+        #elif self.session['command'] == 'channels':
+        #    self.redirect('/main/channels')
+        #elif self.session['command'] == 'channelsec':
+        #    self.redirect('/main/channelsections')
+        #elif self.session['command'] == 'channelsecin':
+        #    self.redirect('/main/channelsections')
+        #elif self.session['command'] == 'channelsecdel':
+        #    self.redirect('/main/channelsections')
+        #elif self.session['command'] == 'channelsecup':
+        #    self.redirect('/main/channelsections')
+        #elif self.session['command'] == 'videos':
+        #    self.redirect('/main/videos')
+        #elif self.session['command'] == 'videosin':
+        #    self.redirect('/main/videos')
+        #elif self.session['command'] == 'videosrm':
+        #    self.redirect('/main/videos')
+        #elif self.session['command'] == 'videosup':
+        #    self.redirect('/main/videos')
+        #elif self.session['command'] == 'captions':
+        #    self.redirect('/main/captions')
+        #elif self.session['command'] == 'captionsin':
+        #    self.redirect('/main/captions')
+        #elif self.session['command'] == 'captionsdw':
+        #    self.redirect('/main/captions')
+        #elif self.session['command'] == 'captionsrm':
+        #    self.redirect('/main/captions')
+        #elif self.session['command'] == 'captionsup':
+        #    self.redirect('/main/captions')
+        #elif self.session['command'] == 'cmtthds':
+        #    self.redirect('/main/cmtthds')
+        #elif self.session['command'] == 'cmtthdsin':
+        #    self.redirect('/main/cmtthds')
+        #elif self.session['command'] == 'cmtthdsup':
+        #    self.redirect('/main/cmtthds')
+        #elif self.session['command'] == 'comments':
+        #    self.redirect('/main/comments')
+        #elif self.session['command'] == 'commentsin':
+        #    self.redirect('/main/comments')
+        #elif self.session['command'] == 'commentsup':
+        #    self.redirect('/main/comments')
+        #elif self.session['command'] == 'commentsrm':
+        #    self.redirect('/main/comments')
+        #elif self.session['command'] == 'activities':
+        #    self.redirect('/main/activity')
+        #elif self.session['command'] == 'activitiesin':
+        #    self.redirect('/main/activity')
+        #elif self.session['command'] == 'channelbanner':
+        #    self.redirect('/main/channelbanner')
+        #elif self.session['command'] == 'channelsup':
+        #    self.redirect('/main/channels')
+        #elif self.session['command'] == 'guideCategory':
+        #    self.redirect('/main/channelbanner')
+        if self.session['command'] == 'random':
+            self.redirect('/main/random')
+        elif self.session['command'] == 'export':
+            self.redirect('/main/exportlogs')
         else:
             self.response.status_int = 401
             self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
@@ -313,15 +292,17 @@ app = webapp2.WSGIApplication([
     ('/main/centralput', CentralPut),
     ('/main/maineventhandler', MainEventHandler),
     ('/main/player', YouTubePlayer),
-    ('/main/search', R_Search),
-    ('/main/playlist', R_Playlist),
-    ('/main/playlistitem', R_PlayListItems),
-    ('/main/channels', R_Channels),
-    ('/main/channelsections', R_ChannelSections),
-    ('/main/videos', R_Videos),
-    ('/main/captions', R_Caption),
-    ('/main/cmtthds', R_CommentThread),
-    ('/main/comments', R_Comment),
-    ('/main/activity', R_Activity),
-    ('/main/channelbanner', R_ChannelBanner)
+    #('/main/search', R_Search),
+    #('/main/playlist', R_Playlist),
+    #('/main/playlistitem', R_PlayListItems),
+    #('/main/channels', R_Channels),
+    #('/main/channelsections', R_ChannelSections),
+    #('/main/videos', R_Videos),
+    #('/main/captions', R_Caption),
+    #('/main/cmtthds', R_CommentThread),
+    #('/main/comments', R_Comment),
+    #('/main/activity', R_Activity),
+    #('/main/channelbanner', R_ChannelBanner),
+    ('/main/exportlogs', ExportLogs),
+    ('/main/random', R_Random)
 ], config=sconfig, debug=True)

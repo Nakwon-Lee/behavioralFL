@@ -1,6 +1,5 @@
 import io
 
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
@@ -9,13 +8,19 @@ from apiclient.http import MediaIoBaseDownload
 
 import google.oauth2.credentials
 
+import random
 import Keys
 
-class R_Comment(BaseHandler):
+class R_Comment():
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
 
         try:
-            whoswho = self.session[str(self.request.remote_addr)]
 
             log_query = Behavlog.query(Behavlog.remoaddr == str(self.request.remote_addr)).order(-Behavlog.startdate).fetch(1)
 
@@ -43,9 +48,11 @@ class R_Comment(BaseHandler):
                     for item in comments.get('items',[]):
                         items.append(item)
 
-                    self.session['commentid'] = items[0].get('id')
+                    idx = random.randrange(0,len(items))
 
-                    thislog.vector[26] = 1
+                    self.session['commentid'] = items[idx].get('id')
+
+                    thislog.vector[14] = 1
 
                 elif command == 'commentsin':
                     cmtthdid = self.session['cmtthdid']
@@ -61,7 +68,7 @@ class R_Comment(BaseHandler):
 
                     print(response)
 
-                    thislog.vector[27] = 1
+                    thislog.vector[15] = 1
 
                 elif command == 'commentsup':
                     commentid = self.session['commentid']
@@ -75,24 +82,31 @@ class R_Comment(BaseHandler):
 
                     request = youtube.comments().update(part='snippet',body=body).execute()
 
-                    thislog.vector[28] = 1
+                    thislog.vector[16] = 1
                 
                 elif command == 'commentsrm':
-                    commentid = self.session['commentid']
+                    sel = self.session['sel']
+                    if sel == 0:
 
-                    request = youtube.comments().delete(id=commentid).execute()
+                        commentid = self.session['cmtthdid']
 
-                    thislog.vector[29] = 1
+                        request = youtube.comments().delete(id=commentid).execute()
 
-                self.redirect('/main/welcome')
+                        self.session['cmtthdid'] = 'none'
+                        self.session['cmtthdmin'] = False
+
+                    thislog.vector[7] = 1
 
             except HttpError, e:
                 thislog.sflabel = True
                 print(e)
-                self.response.write('<html><body><p>http error</p></body></html>')
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on cmt")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

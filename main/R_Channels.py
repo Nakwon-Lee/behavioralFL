@@ -1,16 +1,21 @@
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
 import google.oauth2.credentials
+import random
 
 import Keys
 
-class R_Channels(BaseHandler):
+class R_Channels():
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
         try:
-            whoswho = self.session[str(self.request.remote_addr)]
 
             log_query = Behavlog.query(Behavlog.remoaddr == str(self.request.remote_addr)).order(-Behavlog.startdate).fetch(1)
 
@@ -31,21 +36,48 @@ class R_Channels(BaseHandler):
                 command = self.session['command']
 
                 if command == 'channels':
-                    channelsitems = youtube.channels().list(part='snippet,contentDetails,brandingSettings',mine=True).execute()
 
-                    channelslist = []
+                    sel = self.session['sel']
 
-                    items = []
+                    if sel == 0: # mine
 
-                    for item in channelsitems.get('items',[]):
-                        channelslist.append('%s' % (item.get('id')))
-                        items.append(item)
+                        channelsitems = youtube.channels().list(part='snippet,contentDetails,brandingSettings',mine=True).execute()
 
-                    self.session['channel'] = channelslist[0]
+                        channelslist = []
 
-                    self.session['uploads'] = items[0].get('contentDetails').get('relatedPlaylists').get('uploads')
+                        items = []
 
-                    thislog.vector[9] = 1
+                        for item in channelsitems.get('items',[]):
+                            channelslist.append('%s' % (item.get('id')))
+                            items.append(item)
+
+                        if len(items) > 0:
+                            idx = random.randrange(0,len(items))
+                            self.session['channel'] = channelslist[idx]
+                            self.session['uploads'] = items[idx].get('contentDetails').get('relatedPlaylists').get('uploads')
+                            self.session['channelmine'] = True
+                            self.session['cstate'] = 1
+                        else:
+                            pass
+
+                    elif sel == 1: # user name
+
+                        channelsitems = youtube.channels().list(part='snippet,contentDetails,brandingSettings',forUsername='Google').execute()
+
+                        channelslist = []
+
+                        for item in channelsitems.get('items',[]):
+                            channelslist.append('%s' % (item.get('id')))
+
+                        if len(channelslist) > 0:
+                            idx = random.randrange(0,len(channelslist))
+                            self.session['channel'] = channelslist[idx]
+                            self.session['channelmine'] = False
+                            self.session['cstate'] = 2
+                        else:
+                            pass
+
+                    thislog.vector[0] = 1
 
                 elif command == 'channelsup':
                     channelid = self.session['channel']
@@ -64,14 +96,16 @@ class R_Channels(BaseHandler):
 
                     thislog.vector[32] = 1
 
-                self.redirect('/main/welcome')
-
             except HttpError, e:
                     thislog.sflabel = True
-                    self.response.write('<html><body><p>http error</p></body></html>')
+                    print(e)
+                    print("http error")
+                    raise HttpError
+                    #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on channel")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

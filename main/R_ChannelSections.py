@@ -1,13 +1,20 @@
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
 import google.oauth2.credentials
 
+import random
 import Keys
 
-class R_ChannelSections(BaseHandler):
+class R_ChannelSections():
+
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
         try:
             whoswho = self.session[str(self.request.remote_addr)]
@@ -38,9 +45,11 @@ class R_ChannelSections(BaseHandler):
                     for item in channelsitems.get('items',[]):
                         channelseclist.append('%s' % (item.get('id')))
 
-                    self.session['channelsec'] = item.get('id')
+                    idx = random.randrange(0,len(channelseclist))
 
-                    thislog.vector[10] = 1
+                    self.session['channelsec'] = channelseclist[idx]
+
+                    thislog.vector[28] = 1
 
                 elif command == 'channelsecin':
                     channelid = self.session['channel']
@@ -55,13 +64,13 @@ class R_ChannelSections(BaseHandler):
 
                     youtube.channelSections().insert(part='snippet',body=body).execute()
 
-                    thislog.vector[11] = 1
+                    thislog.vector[29] = 1
 
                 elif command == 'channelsecdel':
                     channelsecid = self.session['channelsec']
                     youtube.channelSections().delete(id=channelsecid).execute()
 
-                    thislog.vector[12] = 1
+                    thislog.vector[31] = 1
 
                 elif command == 'channelsecup':
                     channelsecid = self.session['channelsec']
@@ -77,17 +86,18 @@ class R_ChannelSections(BaseHandler):
 
                     youtube.channelSections().update(part='id,snippet',body=body).execute()
 
-                    thislog.vector[13] = 1
-
-                self.redirect('/main/welcome')
+                    thislog.vector[30] = 1
 
             except HttpError, e:
-                    thislog.sflabel = True
-                    print e
-                    self.response.write('<html><body><p>http error</p></body></html>')
+                thislog.sflabel = True
+                print(e)
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on channelsec")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

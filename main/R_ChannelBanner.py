@@ -1,4 +1,3 @@
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
@@ -6,9 +5,17 @@ from apiclient.http import MediaFileUpload
 
 import google.oauth2.credentials
 
+import random
 import Keys
 
-class R_ChannelBanner(BaseHandler):
+class R_ChannelBanner():
+
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
 
         try:
@@ -38,7 +45,7 @@ class R_ChannelBanner(BaseHandler):
 
                     self.session['bannerurl'] = strurl
 
-                    thislog.vector[32] = 1
+                    thislog.vector[27] = 1
 
                 elif command == 'guideCategory':
 
@@ -51,19 +58,22 @@ class R_ChannelBanner(BaseHandler):
                     for item in response.get('items',[]):
                         items.append(item)
 
+                    idx = random.randrange(0,len(items))
+
                     print(response)
 
-                    thislog.vector[33] = 1
-
-                self.redirect('/main/welcome')
+                    thislog.vector[32] = 1
 
             except HttpError, e:
                 thislog.sflabel = True
                 print(e)
-                self.response.write('<html><body><p>http error</p></body></html>')
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on channelbanner")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

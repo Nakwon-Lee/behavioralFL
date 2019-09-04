@@ -1,4 +1,3 @@
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
@@ -8,11 +7,17 @@ import google.oauth2.credentials
 
 import Keys
 
-class R_Videos(BaseHandler):
+class R_Videos():
+
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
 
         try:
-            whoswho = self.session[str(self.request.remote_addr)]
 
             log_query = Behavlog.query(Behavlog.remoaddr == str(self.request.remote_addr)).order(-Behavlog.startdate).fetch(1)
 
@@ -53,15 +58,16 @@ class R_Videos(BaseHandler):
                         if 'id' in response:
                             self.session['videoid'] = response['id']
 
-                    thislog.vector[14] = 1
+                    thislog.vector[10] = 1
 
                 elif command == 'videosrm':
-
                     videoid = self.session['videoid']
                     youtube.videos().delete(id=videoid).execute()
                     self.session['videoid'] = 'none'
+                    self.session['videomine'] = False
+                    self.session['cstate'] = 14
 
-                    thislog.vector[15] = 1
+                    thislog.vector[4] = 1
 
                 elif command == 'videos':
 
@@ -77,7 +83,7 @@ class R_Videos(BaseHandler):
 
                     self.session['videotitle'] = videotitle
 
-                    thislog.vector[16] = 1
+                    thislog.vector[13] = 1
 
                 elif command == 'videosup':
 
@@ -90,9 +96,9 @@ class R_Videos(BaseHandler):
                         }
                     }
 
-                    youtube.videos().update(part='snippet').execute()
+                    youtube.videos().update(part='snippet',body=body).execute()
 
-                    thislog.vector[17] = 1
+                    thislog.vector[9] = 1
 
                 # elif command == 'playlistsnew':
 
@@ -132,16 +138,16 @@ class R_Videos(BaseHandler):
                 #     youtube.playlists().delete(id=pPlaylistid).execute()
 
                 #     thislog.vector[7] = 1
-
-                self.redirect('/main/welcome')
-
             except HttpError, e:
                 thislog.sflabel = True
                 print(e)
-                self.response.write('<html><body><p>http error</p></body></html>')
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on videos")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')

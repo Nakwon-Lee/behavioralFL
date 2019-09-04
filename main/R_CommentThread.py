@@ -1,17 +1,24 @@
 import io
 
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
 from apiclient.http import MediaIoBaseDownload
 
+import random
 import google.oauth2.credentials
 
 import Keys
 
-class R_CommentThread(BaseHandler):
+class R_CommentThread():
+
+    session = None
+    request = None
+    def __init__(self, pSession, pRequest):
+        self.session = pSession
+        self.request = pRequest
+
     def get(self):
 
         try:
@@ -35,6 +42,7 @@ class R_CommentThread(BaseHandler):
                 command = self.session['command']
 
                 if command == 'cmtthds':
+
                     videoid = self.session['videoid']
                     commentthd = youtube.commentThreads().list(videoId=videoid,part='id,snippet').execute()
 
@@ -43,11 +51,22 @@ class R_CommentThread(BaseHandler):
                     for item in commentthd.get('items',[]):
                         items.append(item)
 
-                    self.session['cmtthdid'] = items[0].get('id')
+                    if len(items) > 0:
+                        idx = random.randrange(0,len(items))
+                        self.session['cmtthdid'] = items[idx].get('id')
+                        if items[idx].get('snippet').get('authorChannelId').get('value') == self.session['channel']:
+                            self.session['cstate'] = 5
+                            self.session['cmtthdmine'] = True
+                        else:
+                            self.session['cstate'] = 6
+                            self.session['cmtthdmine'] = False
+                    else:
+                        pass
 
-                    thislog.vector[23] = 1
+                    thislog.vector[6] = 1
 
                 elif command == 'cmtthdsin':
+
                     videoid = self.session['videoid']
 
                     body = {
@@ -65,7 +84,9 @@ class R_CommentThread(BaseHandler):
 
                     print(response)
 
-                    thislog.vector[24] = 1
+                    self.session['cstate'] = 4
+
+                    thislog.vector[5] = 1
 
                 elif command == 'cmtthdsup':
 
@@ -84,17 +105,20 @@ class R_CommentThread(BaseHandler):
 
                     response = youtube.commentThreads().update(part='snippet',body=body).execute()
 
-                    thislog.vector[25] = 1
+                    self.session['cstate'] = 5
 
-                self.redirect('/main/welcome')
+                    thislog.vector[8] = 1
 
             except HttpError, e:
                 thislog.sflabel = True
                 print(e)
-                self.response.write('<html><body><p>http error</p></body></html>')
+                print("http error")
+                raise HttpError
+                #self.response.write('<html><body><p>http error</p></body></html>')
             finally:
                 thislog.put()
 
         except KeyError:
-            self.response.status_int = 401
-            self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+            print("KeyError on cmtthd")
+            #self.response.status_int = 401
+            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
