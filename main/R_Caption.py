@@ -1,6 +1,7 @@
 import io
 
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
@@ -36,12 +37,14 @@ class R_Caption():
 
             credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-            try:
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
-                
-                command = self.session['command']
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            
+            command = self.session['command']
 
-                if command == 'captions':
+            if command == 'captions':
+
+                try:
+
                     videoid = self.session['videoid']
                     captions = youtube.captions().list(videoId=videoid,part='snippet').execute()
 
@@ -50,13 +53,22 @@ class R_Caption():
                     for item in captions.get('items',[]):
                         items.append(item)
 
-                    idx = random.randrange(0,len(items))
+                    if len(items) > 0:
+                        idx = random.randrange(0,len(items))
+                        self.session['captionid'] = items[idx].get('id')
 
-                    self.session['captionid'] = items[idx].get('id')
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[23] = 23
 
-                    thislog.vector[23] = 1
+            elif command == 'captionsin':
 
-                elif command == 'captionsin':
+                try:
                     videoid = self.session['videoid']
 
                     body = {
@@ -75,9 +87,19 @@ class R_Caption():
 
                     print(response)
 
-                    thislog.vector[24] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 24
 
-                elif command == 'captionsdw':
+            elif command == 'captionsdw':
+
+                try:
+
                     captionid = self.session['captionid']
 
                     request = youtube.captions().download(id=captionid)
@@ -91,16 +113,35 @@ class R_Caption():
                     while not complete:
                         status, complete = download.next_chunk()
 
-                    thislog.vector[37] = 1
-                
-                elif command == 'captionsrm':
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 33
+            
+            elif command == 'captionsrm':
+
+                try:
+
                     captionid = self.session['captionid']
 
                     request = youtube.captions().delete(id=captionid).execute()
 
-                    thislog.vector[26] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 26
 
-                elif command == 'captionsup':
+            elif command == 'captionsup':
+
+                try:
                     videoid = self.session['videoid']
                     captionid = self.session['captionid']
 
@@ -117,18 +158,16 @@ class R_Caption():
 
                     request = youtube.captions().update(part='snippet',body=body,media_body=medf).execute()
 
-                    thislog.vector[25] = 1
-
-            except HttpError, e:
-                thislog.sflabel = True
-                print(e)
-                print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 25
 
         except KeyError:
             print("KeyError on caption")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

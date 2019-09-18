@@ -1,6 +1,7 @@
 import io
 
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
@@ -36,12 +37,13 @@ class R_CommentThread():
 
             credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-            try:
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
-                
-                command = self.session['command']
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            
+            command = self.session['command']
 
-                if command == 'cmtthds':
+            if command == 'cmtthds':
+
+                try:
 
                     videoid = self.session['videoid']
                     commentthd = youtube.commentThreads().list(videoId=videoid,part='id,snippet').execute()
@@ -60,12 +62,19 @@ class R_CommentThread():
                         else:
                             self.session['cstate'] = 6
                             self.session['cmtthdmine'] = False
-                    else:
-                        pass
 
-                    thislog.vector[6] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 6
 
-                elif command == 'cmtthdsin':
+            elif command == 'cmtthdsin':
+
+                try:
 
                     videoid = self.session['videoid']
 
@@ -82,13 +91,24 @@ class R_CommentThread():
 
                     response = youtube.commentThreads().insert(part='snippet',body=body).execute()
 
-                    print(response)
+                    print(response.get('id'))
+
+                    self.session['cmtthdid'] = response.get('id')
 
                     self.session['cstate'] = 4
 
-                    thislog.vector[5] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 5
 
-                elif command == 'cmtthdsup':
+            elif command == 'cmtthdsup':
+
+                try:
 
                     cmtthdid = self.session['cmtthdid']
 
@@ -107,18 +127,16 @@ class R_CommentThread():
 
                     self.session['cstate'] = 5
 
-                    thislog.vector[8] = 1
-
-            except HttpError, e:
-                thislog.sflabel = True
-                print(e)
-                print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 8
 
         except KeyError:
             print("KeyError on cmtthd")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

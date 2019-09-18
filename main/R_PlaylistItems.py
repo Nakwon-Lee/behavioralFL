@@ -1,5 +1,5 @@
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
@@ -29,24 +29,26 @@ class R_PlayListItems():
                     thislog = alog
                     onlyone = False
 
-            try:
+            command = self.session['command']
 
-                command = self.session['command']
+            credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-                credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
 
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            if command == 'playlistitem':
+                # pPlaylistid = self.session['playlistId']
+                # plistitems = youtube.playlistItems().list(playlistId=pPlaylistid,part='id,snippet',maxResults=5).execute()
 
-                if command == 'playlistitem':
-                    # pPlaylistid = self.session['playlistId']
-                    # plistitems = youtube.playlistItems().list(playlistId=pPlaylistid,part='id,snippet',maxResults=5).execute()
+                try:
 
                     sel = self.session['sel']
                     
                     if sel == 0:
 
                         uploadsid = self.session['uploads']
+
                         plistitems = youtube.playlistItems().list(playlistId=uploadsid,part='id,snippet',maxResults=5).execute()
+
                         videos = []
                         itemids = []
 
@@ -62,8 +64,6 @@ class R_PlayListItems():
                             self.session['playlistitemid'] = itemids[idx]
                             self.session['videomine'] = True
                             self.session['cstate'] = 4
-                        else:
-                            pass
 
                     elif sel == 1:
 
@@ -83,12 +83,19 @@ class R_PlayListItems():
                             self.session['playlistitemid'] = itemids[idx]
                             self.session['videomine'] = False
                             self.session['cstate'] = 7
-                        else:
-                            pass
+                    
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 2
 
-                    thislog.vector[2] = 1
+            elif command == 'playlistitemin':
 
-                elif command == 'playlistitemin':
+                try:
 
                     pPlaylistid = self.session['playlistId']
                     videoid = self.session['videoid']
@@ -105,15 +112,34 @@ class R_PlayListItems():
                     youtube.playlistItems().insert(part='snippet',body=body).execute()
                     self.session['cstate'] = 14
 
-                    thislog.vector[3] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 3
 
-                elif command == 'playlistitemdel':
+            elif command == 'playlistitemdel':
+
+                try:
+
                     playlistitemid = self.session['playlistitemid']
                     youtube.playlistItems().delete(id=playlistitemid).execute()
 
-                    thislog.vector[12] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 12
 
-                elif command == 'playlistitemupdate':
+            elif command == 'playlistitemupdate':
+
+                try:
                     pPlaylistid = self.session['playlistId']
                     playlistitemid = self.session['playlistitemid']
                     videoid = self.session['videoid']
@@ -132,18 +158,16 @@ class R_PlayListItems():
 
                     youtube.playlistItems().update(part='snippet',body=body).execute()
 
-                    thislog.vector[11] = 1
-
-            except HttpError, e:
-                thislog.sflabel = True
-                print(e)
-                print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 11
 
         except KeyError:
             print("KeyError on plistitem")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

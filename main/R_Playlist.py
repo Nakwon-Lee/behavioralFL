@@ -1,5 +1,5 @@
-from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
@@ -33,13 +33,14 @@ class R_Playlist():
 
             credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-            try:
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
-                
-                command = self.session['command']
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            
+            command = self.session['command']
 
-                if command == 'playlists':
-                
+            if command == 'playlists':
+
+                try:
+            
                     playlistlist = youtube.playlists().list(part='snippet',mine=True).execute()
 
                     playlists = []
@@ -53,11 +54,19 @@ class R_Playlist():
                         self.session['playlistId'] = playlists[idx]
                         self.session['playlistIdmine'] = True
                         self.session['cstate'] = 3
-                    else:
-                        pass
-                    thislog.vector[1] = 1
 
-                elif command == 'playlistsnew':
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 1
+
+            elif command == 'playlistsnew':
+
+                try:
 
                     body = {
                         'snippet' : {
@@ -71,9 +80,18 @@ class R_Playlist():
 
                     youtube.playlists().insert(part='snippet,status', body=body).execute()
 
-                    thislog.vector[17] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 17
 
-                elif command == 'playlistsupdate':
+            elif command == 'playlistsupdate':
+
+                try:
 
                     pPlaylistid = self.session['playlistId']
 
@@ -87,25 +105,32 @@ class R_Playlist():
 
                     youtube.playlists().update(part='snippet',body=body).execute()
 
-                    thislog.vector[18] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 18
 
-                elif command == 'playlistsrm':
+            elif command == 'playlistsrm':
+
+                try:
 
                     pPlaylistid = self.session['playlistId']
                     youtube.playlists().delete(id=pPlaylistid).execute()
 
-                    thislog.vector[19] = 1
-
-            except HttpError, e:
-                thislog.sflabel = True
-                print(e)
-                print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 19
 
         except KeyError:
             print("KeyError on plist")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

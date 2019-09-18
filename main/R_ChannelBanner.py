@@ -1,4 +1,5 @@
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
@@ -33,21 +34,32 @@ class R_ChannelBanner():
 
             credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-            try:
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
-                
-                command = self.session['command']
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            
+            command = self.session['command']
 
-                if command == 'channelbanner':
+            if command == 'channelbanner':
+
+                try:
+
                     response = youtube.channelBanners().insert(media_body=MediaFileUpload('banner.jpg')).execute()
 
                     strurl = response.get('url')
 
                     self.session['bannerurl'] = strurl
 
-                    thislog.vector[27] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 27
 
-                elif command == 'guideCategory':
+            elif command == 'guideCategory':
+
+                try:
 
                     channelid = self.session['channel']
 
@@ -58,22 +70,21 @@ class R_ChannelBanner():
                     for item in response.get('items',[]):
                         items.append(item)
 
-                    idx = random.randrange(0,len(items))
+                    if len(items) > 0:
+                        idx = random.randrange(0,len(items))
 
                     print(response)
 
-                    thislog.vector[32] = 1
-
-            except HttpError, e:
-                thislog.sflabel = True
-                print(e)
-                print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 32
 
         except KeyError:
             print("KeyError on channelbanner")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

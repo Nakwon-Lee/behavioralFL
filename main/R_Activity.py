@@ -1,4 +1,5 @@
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
@@ -32,12 +33,14 @@ class R_Activity():
 
             credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-            try:
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
-                
-                command = self.session['command']
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            
+            command = self.session['command']
 
-                if command == 'activities':
+            if command == 'activities':
+
+                try:
+
                     comments = youtube.activities().list(part='id,snippet,contentDetails',mine=True).execute()
 
                     items = []
@@ -45,13 +48,22 @@ class R_Activity():
                     for item in comments.get('items',[]):
                         items.append(item)
 
-                    idx = random.randrange(0,len(items))
+                    if len(items) > 0:
+                        idx = random.randrange(0,len(items))
+                        self.session['activityid'] = items[idx].get('id')
+                
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 21
 
-                    self.session['activityid'] = items[idx].get('id')
+            elif command == 'activitiesin':
 
-                    thislog.vector[21] = 1
-
-                elif command == 'activitiesin':
+                try:
 
                     videoid = self.session['videoid']
 
@@ -73,18 +85,16 @@ class R_Activity():
 
                     print(response)
 
-                    thislog.vector[22] = 1
-
-            except HttpError, e:
-                thislog.sflabel = True
-                print(e)
-                print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 22
 
         except KeyError:
             print("KeyError on activities")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

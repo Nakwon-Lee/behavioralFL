@@ -35,14 +35,15 @@ from R_Comment import R_Comment
 from R_Activity import R_Activity
 from R_ChannelBanner import R_ChannelBanner
 from R_Random import R_Random
+from R_ForceFail import R_ForceFail
+from R_VideoUp import R_VideoUp
 from ExportLogs import ExportLogs
+from GlobalVar import LIST_LENGTH
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
     autoescape=True,
     extensions=['jinja2.ext.autoescape'])
-
-LIST_LENGTH = 38
 
 sconfig = {}
 sconfig['webapp2_extras.sessions'] = {'secret_key':'472405203058'}
@@ -83,7 +84,7 @@ class MainPage(BaseHandler):
         templist=[]
 
         for i in range(LIST_LENGTH):
-            templist.append(0)
+            templist.append(-1)
 
         alog.vector = templist
 
@@ -237,6 +238,10 @@ class MainEventHandler(BaseHandler):
         #    self.redirect('/main/channelbanner')
         if self.session['command'] == 'random':
             self.redirect('/main/random')
+        elif self.session['command'] == 'ffail':
+            self.redirect('/main/ffail')
+        elif self.session['command'] == 'videoup':
+            self.redirect('/main/videoup')
         elif self.session['command'] == 'export':
             self.redirect('/main/exportlogs')
         else:
@@ -304,5 +309,7 @@ app = webapp2.WSGIApplication([
     #('/main/activity', R_Activity),
     #('/main/channelbanner', R_ChannelBanner),
     ('/main/exportlogs', ExportLogs),
-    ('/main/random', R_Random)
+    ('/main/random', R_Random),
+    ('/main/videoup', R_VideoUp),
+    ('/main/ffail', R_ForceFail)
 ], config=sconfig, debug=True)

@@ -1,0 +1,2 @@
+class BehaviorError(Exception):
+    pass

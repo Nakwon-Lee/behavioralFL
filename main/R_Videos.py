@@ -1,4 +1,5 @@
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
@@ -31,13 +32,14 @@ class R_Videos():
 
             credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-            try:
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
-                
-                command = self.session['command']
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            
+            command = self.session['command']
 
-                if command == 'videosin':
-                
+            if command == 'videosin':
+
+                try:
+            
                     body = {
                         'snippet' : {
                             'title' : 'rainbow',
@@ -55,21 +57,40 @@ class R_Videos():
 
                     while response is None:
                         status, response = videoin_req.next_chunk()
-                        if 'id' in response:
-                            self.session['videoid'] = response['id']
+                        #if 'id' in response:
+                        #    self.session['videoid'] = response['id']
 
-                    thislog.vector[10] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 10
 
-                elif command == 'videosrm':
+            elif command == 'videosrm':
+
+                try:
+
                     videoid = self.session['videoid']
                     youtube.videos().delete(id=videoid).execute()
                     self.session['videoid'] = 'none'
                     self.session['videomine'] = False
                     self.session['cstate'] = 14
 
-                    thislog.vector[4] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 4
 
-                elif command == 'videos':
+            elif command == 'videos':
+
+                try:
 
                     videoid = self.session['videoid']
                     videostat = youtube.videos().list(id=videoid,part='snippet').execute()
@@ -79,13 +100,23 @@ class R_Videos():
                     for item in videostat.get('items',[]):
                         items.append(item)
 
-                    videotitle = items[0].get('snippet').get('title')
+                    if len(items) > 0:
+                        videotitle = items[0].get('snippet').get('title')
 
                     self.session['videotitle'] = videotitle
 
-                    thislog.vector[13] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 13
 
-                elif command == 'videosup':
+            elif command == 'videosup':
+
+                try:
 
                     videoid = self.session['videoid']
 
@@ -98,56 +129,55 @@ class R_Videos():
 
                     youtube.videos().update(part='snippet',body=body).execute()
 
-                    thislog.vector[9] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 9
 
-                # elif command == 'playlistsnew':
+            # elif command == 'playlistsnew':
 
-                #     body = {
-                #         'snippet' : {
-                #             'title' : 'added new 1',
-                #             'description' : 'Experiment!'
-                #         },
-                #         'status' : {
-                #             'privacyStatus' : 'private'
-                #         }
-                #     }
+            #     body = {
+            #         'snippet' : {
+            #             'title' : 'added new 1',
+            #             'description' : 'Experiment!'
+            #         },
+            #         'status' : {
+            #             'privacyStatus' : 'private'
+            #         }
+            #     }
 
-                #     youtube.playlists().insert(part='snippet,status', body=body).execute()
+            #     youtube.playlists().insert(part='snippet,status', body=body).execute()
 
-                #     thislog.vector[5] = 1
+            #     thislog.vector[5] = 1
 
-                # elif command == 'playlistsupdate':
+            # elif command == 'playlistsupdate':
 
-                #     pPlaylistid = self.session['playlistId']
+            #     pPlaylistid = self.session['playlistId']
 
-                #     body = {
-                #         'id' : pPlaylistid,
-                #         'snippet' : {
-                #             'title' : 'list1 modi!',
-                #             'description' : 'none'
-                #         }
-                #     }
+            #     body = {
+            #         'id' : pPlaylistid,
+            #         'snippet' : {
+            #             'title' : 'list1 modi!',
+            #             'description' : 'none'
+            #         }
+            #     }
 
-                #     youtube.playlists().update(part='snippet',body=body).execute()
+            #     youtube.playlists().update(part='snippet',body=body).execute()
 
-                #     thislog.vector[6] = 1
+            #     thislog.vector[6] = 1
 
-                # elif command == 'playlistsrm':
+            # elif command == 'playlistsrm':
 
-                #     pPlaylistid = self.session['playlistId']
-                #     youtube.playlists().delete(id=pPlaylistid).execute()
+            #     pPlaylistid = self.session['playlistId']
+            #     youtube.playlists().delete(id=pPlaylistid).execute()
 
-                #     thislog.vector[7] = 1
-            except HttpError, e:
-                thislog.sflabel = True
-                print(e)
-                print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+            #     thislog.vector[7] = 1
 
         except KeyError:
             print("KeyError on videos")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

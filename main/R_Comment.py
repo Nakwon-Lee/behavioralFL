@@ -1,6 +1,7 @@
 import io
 
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
@@ -34,12 +35,14 @@ class R_Comment():
 
             credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-            try:
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
-                
-                command = self.session['command']
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            
+            command = self.session['command']
 
-                if command == 'comments':
+            if command == 'comments':
+
+                try:
+
                     cmtthdid = self.session['cmtthdid']
                     comments = youtube.comments().list(part='snippet',parentId=cmtthdid).execute()
 
@@ -48,13 +51,23 @@ class R_Comment():
                     for item in comments.get('items',[]):
                         items.append(item)
 
-                    idx = random.randrange(0,len(items))
+                    if len(items) > 0:
+                        idx = random.randrange(0,len(items))
+                        self.session['commentid'] = items[idx].get('id')
 
-                    self.session['commentid'] = items[idx].get('id')
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 14
 
-                    thislog.vector[14] = 1
+            elif command == 'commentsin':
 
-                elif command == 'commentsin':
+                try:
+
                     cmtthdid = self.session['cmtthdid']
 
                     body = {
@@ -66,11 +79,21 @@ class R_Comment():
 
                     response = youtube.comments().insert(part='snippet',body=body).execute()
 
-                    print(response)
+                    self.session['commentid'] = response.get('id')
 
-                    thislog.vector[15] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 15
 
-                elif command == 'commentsup':
+            elif command == 'commentsup':
+
+                try:
+
                     commentid = self.session['commentid']
 
                     body = {
@@ -82,31 +105,41 @@ class R_Comment():
 
                     request = youtube.comments().update(part='snippet',body=body).execute()
 
-                    thislog.vector[16] = 1
-                
-                elif command == 'commentsrm':
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 16
+            
+            elif command == 'commentsrm':
+
+                try:
+
                     sel = self.session['sel']
                     if sel == 0:
 
                         commentid = self.session['cmtthdid']
+
+                        print(commentid)
 
                         request = youtube.comments().delete(id=commentid).execute()
 
                         self.session['cmtthdid'] = 'none'
                         self.session['cmtthdmin'] = False
 
-                    thislog.vector[7] = 1
-
-            except HttpError, e:
-                thislog.sflabel = True
-                print(e)
-                print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 7
 
         except KeyError:
             print("KeyError on cmt")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

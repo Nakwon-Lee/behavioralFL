@@ -1,4 +1,5 @@
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
@@ -28,8 +29,10 @@ class R_Search():
                     thislog = alog
                     onlyone = False
 
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,developerKey=Keys.DEVELOPER_KEY)
+            
             try:
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,developerKey=Keys.DEVELOPER_KEY)
+
                 searchlist = youtube.search().list(q='Google Official',part='snippet',type='video',maxResults=5).execute()
 
                 videos = []
@@ -38,22 +41,20 @@ class R_Search():
                     if item['id']['kind'] == 'youtube#video':
                         videos.append('%s' % (item['id']['videoId']))
 
-                idx = random.randrange(0,len(videos))
-
-                self.session['videoid'] = videos[idx]
-
-                thislog.vector[20] = 1
+                if len(videos) > 0:
+                    idx = random.randrange(0,len(videos))
+                    self.session['videoid'] = videos[idx]
 
             except HttpError, e:
                 thislog.sflabel = True
                 print(e)
                 print("http error")
-                raise HttpError
-                #self.response.write('<html><body><p>http error</p></body></html>')
+                raise BehaviorError()
             finally:
-                thislog.put()
+                count = self.session['count']
+                thislog.vector[count] = 20
 
         except KeyError:
             print("KeyError on search")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

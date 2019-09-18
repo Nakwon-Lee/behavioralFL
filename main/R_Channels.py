@@ -1,4 +1,5 @@
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 
@@ -27,15 +28,15 @@ class R_Channels():
                     thislog = alog
                     onlyone = False
 
-            try:
+            credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
 
-                credentials = google.oauth2.credentials.Credentials(**self.session['credentials'])
+            youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
 
-                youtube = build(Keys.YOUTUBE_API_SERVICE_NAME,Keys.YOUTUBE_API_VERSION,credentials=credentials)
+            command = self.session['command']
 
-                command = self.session['command']
+            if command == 'channels':
 
-                if command == 'channels':
+                try:
 
                     sel = self.session['sel']
 
@@ -57,8 +58,6 @@ class R_Channels():
                             self.session['uploads'] = items[idx].get('contentDetails').get('relatedPlaylists').get('uploads')
                             self.session['channelmine'] = True
                             self.session['cstate'] = 1
-                        else:
-                            pass
 
                     elif sel == 1: # user name
 
@@ -74,12 +73,20 @@ class R_Channels():
                             self.session['channel'] = channelslist[idx]
                             self.session['channelmine'] = False
                             self.session['cstate'] = 2
-                        else:
-                            pass
 
-                    thislog.vector[0] = 1
+                except HttpError, e:
+                    thislog.sflabel = True
+                    print(e)
+                    print("http error")
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 0
 
-                elif command == 'channelsup':
+            elif command == 'channelsup':
+
+                try:
+
                     channelid = self.session['channel']
                     bannerurl = self.session['bannerurl']
 
@@ -94,18 +101,16 @@ class R_Channels():
 
                     youtube.channels().update(part='id',body=body).execute()
 
-                    thislog.vector[32] = 1
-
-            except HttpError, e:
+                except HttpError, e:
                     thislog.sflabel = True
                     print(e)
                     print("http error")
-                    raise HttpError
-                    #self.response.write('<html><body><p>http error</p></body></html>')
-            finally:
-                thislog.put()
+                    raise BehaviorError()
+                finally:
+                    count = self.session['count']
+                    thislog.vector[count] = 32
 
         except KeyError:
             print("KeyError on channel")
-            #self.response.status_int = 401
-            #self.response.write('<html><body><p>401 unauthorized access</p></body></html>')
+        finally:
+            thislog.put()

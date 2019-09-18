@@ -1,5 +1,6 @@
 from BaseHandler import BaseHandler
 from BehaveLog import Behavlog
+from BehaviorError import BehaviorError
 from apiclient.errors import HttpError
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
@@ -20,6 +21,8 @@ import random
 import google.oauth2.credentials
 
 import Keys
+
+from GlobalVar import LIST_LENGTH
 
 class R_Random(BaseHandler):
     c_channels = None
@@ -151,9 +154,11 @@ class R_Random(BaseHandler):
                 print(count)
                 print(avail)
 
+                self.session['count'] = count
+
                 selectedkey = random.choice(list(avail))
 
-                if count > 20:
+                if count >= LIST_LENGTH:
                     selectedkey = 100
                 else:
                     count = count + 1
@@ -300,7 +305,7 @@ class R_Random(BaseHandler):
                     self.session['sel'] = 0 # no meaning
                     self.session['command'] = 'guideCategory'
                     self.c_channelbanner.get()
-                elif selectedkey == 35: # captions 37
+                elif selectedkey == 35: # captions 33
                     self.session['sel'] = 0 # no meaning
                     self.session['command'] = 'captionsdw'
                     self.c_caption.get()
@@ -310,5 +315,6 @@ class R_Random(BaseHandler):
                     
             self.redirect('/main/welcome')
 
-        except HttpError:
-            print('http error')
+        except BehaviorError:
+            print('behavior error')
+            self.redirect('/main/welcome')
